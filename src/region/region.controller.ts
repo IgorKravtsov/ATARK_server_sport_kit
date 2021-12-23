@@ -3,7 +3,6 @@ import { Region } from "./region.entity";
 import { RegionService } from "./region.service";
 import { CreateRegionDto } from "./DTO/region.create.dto";
 import { AuthGuard } from "../user/guards/auth.guard";
-import { AuthUser } from "../user/decorators/authUser.decorator";
 
 @Controller('api/region')
 export class RegionController {
@@ -17,7 +16,7 @@ export class RegionController {
 
   @Post('/create')
   @UsePipes(new ValidationPipe())
-  @UseGuards(AuthGuard)
+  // @UseGuards(AuthGuard)
   async createRegion(
     @Body() createRegionDto: CreateRegionDto
   ): Promise<Region> {

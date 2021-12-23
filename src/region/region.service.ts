@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Region } from "./region.entity";
 import { getRepository, Repository } from "typeorm";
-import { UserRoles } from "../user/types/userRoles.enum";
+import { UserRoles } from "../user/enums/userRoles.enum";
 import { CreateRegionDto } from "./DTO/region.create.dto";
 import { User } from "../user/user.entity";
 
@@ -25,7 +25,7 @@ export class RegionService {
     if(createRegionDto.headTrainerId) {
       const user = await User.findOne(createRegionDto.headTrainerId)
       if(!user) {
-        throw new HttpException("Указаного пользователя в качестве главы не найдено", HttpStatus.UNPROCESSABLE_ENTITY);
+        throw new HttpException("Указаного пользователя в качестве главы не найдено", HttpStatus.NOT_FOUND);
       }
       region.headTrainer = user
     }

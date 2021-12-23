@@ -4,16 +4,22 @@ import { compare } from 'bcrypt'
 import { RegistrationDto } from "./DTO/registration.dto";
 import { User } from "./user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { IRegistrationResponse } from "./types/registrationResponse.interface";
-import { UserRoles } from "./types/userRoles.enum";
+import { Repository, UpdateResult } from "typeorm";
+import { IRegistrationResponse } from "./interfaces/IRegistrationResponse";
+import { UserRoles } from "./enums/userRoles.enum";
 import { LoginDto } from "./DTO/login.dto";
-import { ITokenInformation } from "./DTO/ITokenInformation";
+import { ITokenInformation } from "./interfaces/ITokenInformation";
 import { Region } from "../region/region.entity";
+import { Organization } from "../organization/organization.entity";
+import { IOrganizationResponse } from "./interfaces/IOrganizationResponse";
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
+    @InjectRepository(Region) private readonly regionRepository: Repository<Region>,
+  ) {}
 
   generateJWT({id, role}: ITokenInformation): string {
     if(!role || !id) {
@@ -37,68 +43,66 @@ export class UserService {
     }
   }
 
-  async registration(
-    {
-      email, password, role, name, level, surname, regionId, trainerId, organizationIds
-    }: RegistrationDto): Promise<User> {
-
-    if(!email || !password) {
-      throw new HttpException('Email или пароль отсутствуют!', HttpStatus.UNPROCESSABLE_ENTITY)
+  buildOrganizationResponse(organization: Organization): IOrganizationResponse {
+    return {
+      id: organization.id,
+      title: organization.title
     }
+  }
 
-    const candidate = await User.findOne({email});
+  async registration(registrationDto: RegistrationDto): Promise<User> {
+
+    const candidate = await this.userRepository.findOne({email: registrationDto.email});
     if(candidate) {
       throw new HttpException('Пользователь с таким email уже существует', HttpStatus.UNPROCESSABLE_ENTITY)
     }
 
-    if(role === UserRoles.LEARNER && !trainerId) {
+    if(registrationDto.role === UserRoles.LEARNER && !registrationDto.trainerId) {
       throw new HttpException("Тренер не указан!", HttpStatus.UNPROCESSABLE_ENTITY);
     }
     const newUser = new User()
+    Object.assign(newUser, registrationDto)
 
-    //TODO: раскоментировать код, когда будет готов сервис организации
-
-    // if(organizationIds.length === 0) {
-    //   throw new HttpException("Не указана(-ы) организация(-и)", HttpStatus.UNPROCESSABLE_ENTITY);
-    // } else {
-    //   let nowOrganization
-    //   for (let i = 0; i < organizationIds.length; ++i) {
-    //     nowOrganization = await Organization.findOne({id: organizationIds[i]})
-    //     if(!nowOrganization) {
-    //       throw new HttpException("Не найдена указанная организация", HttpStatus.UNPROCESSABLE_ENTITY);
-    //     }
-    //     organizations.push(nowOrganization)
-    //   }
-    // }
-
-
-    if(regionId) {
-      const region = await Region.findOne({id: regionId});
+    if(registrationDto.regionId) {
+      const region = await this.regionRepository.findOne({id: registrationDto.regionId});
       if(!region) {
-        throw new HttpException("Не удалось найти заданный регион!", HttpStatus.UNPROCESSABLE_ENTITY);
+        throw new HttpException("Не удалось найти заданный регион!", HttpStatus.NOT_FOUND);
       }
       newUser.region = region;
     }
 
-    let trainer;
-    if(trainerId) {
-      trainer = await this.userRepository.findOne({id: trainerId});
-      if(trainer) {
-        newUser.trainer = trainer;
-      } else {
-        throw new HttpException("Не удалось найти тренера!", HttpStatus.UNPROCESSABLE_ENTITY);
+    if(registrationDto.trainerId) {
+      const trainer = await this.userRepository.findOne({id: registrationDto.trainerId});
+      if(!trainer) {
+        throw new HttpException("Не удалось найти тренера!", HttpStatus.NOT_FOUND);
       }
+      newUser.trainer = trainer;
     }
 
-    Object.assign(newUser, {email, password, role, name, level, surname, regionId, trainerId, organizationIds})
-    return await this.userRepository.save(newUser)
+
+    if(registrationDto.organizationIds.length === 0) {
+      throw new HttpException("Не указана(-ы) организация(-и)", HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    const organizations: Organization[] = []
+    for(const nowOrganizationId of registrationDto.organizationIds) {
+      const nowOrganization = await this.organizationRepository.findOne({id: nowOrganizationId})
+      if(!nowOrganization) {
+        throw new HttpException(`Не найдена организация c id ${nowOrganizationId}`, HttpStatus.NOT_FOUND);
+      }
+      organizations.push(nowOrganization)
+    }
+    newUser.organizations = organizations
+
+    await this.userRepository.save(newUser)
+    return newUser
   }
 
   async login({ email, password }: LoginDto): Promise<User> {
 
     const user = await this.userRepository.findOne({email}, { select: ['id', 'password', 'role'] });
     if(!user) {
-      throw new HttpException("Пользователь с такой почтой не найден!", HttpStatus.UNPROCESSABLE_ENTITY);
+      throw new HttpException("Пользователь с такой почтой не найден!", HttpStatus.NOT_FOUND);
     }
 
     let isCorrectPassword = await compare(password, user.password);
@@ -113,10 +117,13 @@ export class UserService {
     return this.userRepository.findOne(id)
   }
 
-  async updateUser(id: number, updateUserDto: RegistrationDto): Promise<User> {
+  async updateUser(id: number, updateUserDto: RegistrationDto): Promise<UpdateResult> {
     const user = await this.findById(id)
-    Object.assign(user, updateUserDto)
-    return await this.userRepository.save(user)
+    const {email, password, role, level, name, surname, regionId, trainerId, organizationIds} = updateUserDto
+    Object.assign(user, {email, password, role, level, name, surname})
+
+
+    return await this.userRepository.update({id: user.id}, {...user})
   }
 
   async getTrainers(): Promise<User[]> {
@@ -133,4 +140,30 @@ export class UserService {
     return await User.find({role: UserRoles.TRAINER, region })
   }
 
+  async getUserOrganizations(userId: number): Promise<Organization[]> {
+    const organizations = await Organization.find({relations: ['users']});
+    return organizations.filter(organization => organization.users.filter(user => user.id === userId).length > 0)
+  }
+
+  async getLearnersOfTheTrainer(user: User): Promise<User[]> {
+    // if(user.role === UserRoles.LEARNER) {
+    //   throw new HttpException("Не достаточно прав!", HttpStatus.FORBIDDEN)
+    // }
+    const learners = await this.userRepository.find({trainer: user})
+    return learners.filter(learner => learner.role === UserRoles.LEARNER)
+  }
+
+  async getPayment(user: User): Promise<number> {
+
+    return '' as any
+  }
+
+  async makeTrainerFromLearner(learnerId: number): Promise<User> {
+    const user = await this.findById(learnerId)
+    if(user.role !== UserRoles.LEARNER) {
+      throw new HttpException("Нельзя обновить роль не у ученика", HttpStatus.BAD_REQUEST)
+    }
+    user.role = UserRoles.TRAINER
+    return await this.userRepository.save(user);
+  }
 }

@@ -2,13 +2,13 @@ import {
   BaseEntity, BeforeInsert,
   Column,
   Entity,
-  JoinColumn,
+  JoinColumn, JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn
 } from "typeorm";
-import {UserRoles} from "./types/userRoles.enum";
+import {UserRoles} from "./enums/userRoles.enum";
 import {IsEmail} from "class-validator";
 import { Characteristic } from "../characteristic/characteristic.entity";
 import { Subscription } from "../subscription/subscriotion.entity";
@@ -101,11 +101,33 @@ export class User extends BaseEntity {
   @ManyToMany(
     () => Training
   )
+  @JoinTable({
+    name: "user_training",
+    joinColumn: {
+      name: "user_id",
+      referencedColumnName: "id"
+    },
+    inverseJoinColumn: {
+      name: "training_id",
+      referencedColumnName: "id"
+    },
+  })
   trainingsForLearners: Training[];
 
   @ManyToMany(
     () => Organization
   )
+  @JoinTable({
+    name: "organization_user",
+    joinColumn: {
+      name: "user_id",
+      referencedColumnName: "id"
+    },
+    inverseJoinColumn: {
+      name: "organization_id",
+      referencedColumnName: "id"
+    }
+  })
   organizations: Organization[];
 
 

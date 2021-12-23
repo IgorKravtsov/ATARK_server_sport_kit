@@ -10,8 +10,9 @@ import { UserModule } from "./user/user.module";
 import { SubscriptionModule } from "./subscription/subscription.module";
 import { SubscriptionTypeService } from "./subscription-type/subscription-type.service";
 import { SubscriptionTypeModule } from "./subscription-type/subscription-type.module";
-import ormconfig from "./ormconfig";
 import { AuthMiddleware } from "./user/middlewares/auth.middleware";
+import { OrganizationModule } from "./organization/organization.module";
+import ormconfig from "./ormconfig";
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { AuthMiddleware } from "./user/middlewares/auth.middleware";
     RegionModule,
     UserModule,
     SubscriptionModule,
-    SubscriptionTypeModule
+    SubscriptionTypeModule,
+    OrganizationModule,
   ],
   controllers: [AppController],
   providers: [AppService, SubscriptionTypeService],

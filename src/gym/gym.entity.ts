@@ -12,7 +12,7 @@ export class Gym extends BaseEntity {
   })
   title: string;
 
-  @Column()
+  @Column({unique: true})
   address: string;
 
   @OneToMany(

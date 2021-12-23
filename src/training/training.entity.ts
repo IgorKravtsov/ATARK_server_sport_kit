@@ -17,7 +17,7 @@ export class Training extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({type: "date"})
   trainingDate: Date;
 
   @Column()

@@ -3,7 +3,7 @@ import { Response, NextFunction } from "express"
 import { ExpressRequestInterface } from "../../types/expressRequest.interface";
 import { verify } from "jsonwebtoken";
 import { UserService } from "../user.service";
-import { ITokenInformation } from "../DTO/ITokenInformation";
+import { ITokenInformation } from "../interfaces/ITokenInformation";
 
 
 @Injectable()
@@ -20,8 +20,7 @@ export class AuthMiddleware implements NestMiddleware{
     
     try {
       const decode = verify(token, process.env.SECRET_KEY) as ITokenInformation
-      const user = await this.userService.findById(decode.id)
-      req.user = user
+      req.user = await this.userService.findById(decode.id)
       next()
     } catch (e) {
       req.user = null

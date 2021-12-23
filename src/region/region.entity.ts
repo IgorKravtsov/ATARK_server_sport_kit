@@ -28,7 +28,7 @@ export class Region extends BaseEntity {
   )
   users: User[]
 
-  @Column()
+  @Column({ unique: true })
   title: string;
 
 }

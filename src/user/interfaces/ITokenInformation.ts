@@ -1,4 +1,4 @@
-import { UserRoles } from "../types/userRoles.enum";
+import { UserRoles } from "../enums/userRoles.enum";
 
 export interface ITokenInformation {
   id: number;

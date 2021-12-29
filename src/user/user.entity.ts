@@ -1,25 +1,27 @@
 import {
-  BaseEntity, BeforeInsert,
+  BaseEntity,
+  BeforeInsert,
   Column,
   Entity,
-  JoinColumn, JoinTable,
+  JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn
-} from "typeorm";
-import {UserRoles} from "./enums/userRoles.enum";
-import {IsEmail} from "class-validator";
-import { Characteristic } from "../characteristic/characteristic.entity";
-import { Subscription } from "../subscription/subscriotion.entity";
-import { Region } from "../region/region.entity";
-import { Training } from "../training/training.entity";
-import { Organization } from "../organization/organization.entity";
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { IsEmail } from 'class-validator';
 import { hash } from 'bcrypt';
+import { UserRoles } from './enums/userRoles.enum';
+import { Characteristic } from '../characteristic/characteristic.entity';
+import { Subscription } from '../subscription/subscriotion.entity';
+import { Region } from '../region/region.entity';
+import { Training } from '../training/training.entity';
+import { Organization } from '../organization/organization.entity';
+import { UserTraining } from '../user-training/user-training.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
-
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -30,7 +32,7 @@ export class User extends BaseEntity {
   surname: string;
 
   @Column({
-    unique:true
+    unique: true,
   })
   @IsEmail()
   email: string;
@@ -39,97 +41,75 @@ export class User extends BaseEntity {
   password: string;
 
   @Column({
-    nullable: true
+    nullable: true,
   })
   level: string;
 
   @Column({
-    type:"enum",
-    enum: UserRoles
+    type: 'enum',
+    enum: UserRoles,
   })
   role: string;
 
-  @OneToMany(
-    () => User,
-    user => user.trainer
-  )
+  @OneToMany(() => User, (user) => user.trainer)
   trainers: User[];
 
-  @ManyToOne(
-    () => User,
-    user => user.trainers
-  )
+  @ManyToOne(() => User, (user) => user.trainers)
   @JoinColumn({
-    name: 'trainerId'
+    name: 'trainerId',
   })
   trainer: User;
 
-
-  @OneToMany(
-    () => Characteristic,
-    characteristic => characteristic.user
-  )
+  @OneToMany(() => Characteristic, (characteristic) => characteristic.user)
   characteristics: Characteristic[];
 
-  @OneToMany(
-    () => Subscription,
-    subscription => subscription.user
-  )
+  @OneToMany(() => Subscription, (subscription) => subscription.user)
   subscriptions: Subscription[];
 
-  @OneToMany(
-    () => Region,
-    region => region.headTrainer
-  )
+  @OneToMany(() => Region, (region) => region.headTrainer)
   regionHeadTrainer: Region;
 
-  @ManyToOne(
-    () => Region,
-    region => region.users
-  )
+  @ManyToOne(() => Region, (region) => region.users)
   @JoinColumn({
-    name: 'regionId'
+    name: 'regionId',
   })
   region: Region;
 
-  @OneToMany(
-    () => Training,
-    training => training.trainer
-  )
+  @OneToMany(() => Training, (training) => training.trainer)
   trainings: Training[];
 
-  @ManyToMany(
-    () => Training
-  )
-  @JoinTable({
-    name: "user_training",
-    joinColumn: {
-      name: "user_id",
-      referencedColumnName: "id"
-    },
-    inverseJoinColumn: {
-      name: "training_id",
-      referencedColumnName: "id"
-    },
-  })
-  trainingsForLearners: Training[];
+  // @ManyToMany(
+  //   () => Training
+  // )
+  // @JoinTable({
+  //   name: "user_training",
+  //   joinColumn: {
+  //     name: "user_id",
+  //     referencedColumnName: "id"
+  //   },
+  //   inverseJoinColumn: {
+  //     name: "training_id",
+  //     referencedColumnName: "id"
+  //   },
+  // })
+  // trainingsForLearners: Training[];
 
-  @ManyToMany(
-    () => Organization
-  )
+  @OneToMany(() => UserTraining, (userTraining) => userTraining.user)
+  userTrainings: UserTraining[];
+
+  @ManyToMany(() => Organization)
   @JoinTable({
-    name: "organization_user",
+    name: 'organization_user',
     joinColumn: {
-      name: "user_id",
-      referencedColumnName: "id"
+      name: 'user_id',
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
-      name: "organization_id",
-      referencedColumnName: "id"
-    }
+      name: 'organization_id',
+      referencedColumnName: 'id',
+    },
   })
   organizations: Organization[];
-
 
   @BeforeInsert()
   async hashPassword() {

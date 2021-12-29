@@ -26,6 +26,7 @@ export class RegistrationDto {
   readonly level: string;
 
   @IsArray()
+  @IsNotEmpty()
   readonly organizationIds: number[];
 
   @IsNumber()

@@ -12,6 +12,7 @@ import { SubscriptionTypeService } from "./subscription-type/subscription-type.s
 import { SubscriptionTypeModule } from "./subscription-type/subscription-type.module";
 import { AuthMiddleware } from "./user/middlewares/auth.middleware";
 import { OrganizationModule } from "./organization/organization.module";
+import { UserTrainingModule } from './user-training/user-training.module';
 import ormconfig from "./ormconfig";
 
 @Module({
@@ -25,6 +26,7 @@ import ormconfig from "./ormconfig";
     SubscriptionModule,
     SubscriptionTypeModule,
     OrganizationModule,
+    UserTrainingModule,
   ],
   controllers: [AppController],
   providers: [AppService, SubscriptionTypeService],

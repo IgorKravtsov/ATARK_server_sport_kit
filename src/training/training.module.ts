@@ -11,9 +11,10 @@ import { UserService } from "../user/user.service";
 import { Organization } from "../organization/organization.entity";
 import { Region } from "../region/region.entity";
 import { Gym } from "../gym/gym.entity";
+import { Characteristic } from "../characteristic/characteristic.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Training, User, Organization, Region, Gym])],
+  imports: [TypeOrmModule.forFeature([Training, User, Organization, Region, Gym, Characteristic])],
   controllers: [TrainingController],
   providers: [TrainingService, UserService, AuthGuard, TrainerGuard, AdminGuard]
 })

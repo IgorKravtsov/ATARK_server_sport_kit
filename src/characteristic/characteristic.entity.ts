@@ -16,10 +16,7 @@ export class Characteristic extends BaseEntity {
   @Column()
   saveDate: Date;
 
-  @ManyToOne(
-    () => User,
-    user => user.characteristics
-  )
+  @ManyToOne(() => User,user => user.characteristics)
   @JoinColumn({
     name: 'userId'
   })

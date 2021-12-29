@@ -5,11 +5,12 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
-  ManyToOne,
+  ManyToOne, OneToMany,
   PrimaryGeneratedColumn
 } from "typeorm";
 import { User } from "../user/user.entity";
 import { Gym } from "../gym/gym.entity";
+import { UserTraining } from "../user-training/user-training.entity";
 
 @Entity('trainings')
 export class Training extends BaseEntity {
@@ -49,19 +50,22 @@ export class Training extends BaseEntity {
   gym: Gym
 
 
-  @ManyToMany(
-    () => User
-  )
-  @JoinTable({
-    name: "user_training",
-    joinColumn: {
-      name: "training_id",
-      referencedColumnName: "id"
-    },
-    inverseJoinColumn: {
-      name: "user_id",
-      referencedColumnName: "id"
-    }
-  })
-  users: User[]
+  // @ManyToMany(
+  //   () => User
+  // )
+  // @JoinTable({
+  //   name: "user_training",
+  //   joinColumn: {
+  //     name: "training_id",
+  //     referencedColumnName: "id"
+  //   },
+  //   inverseJoinColumn: {
+  //     name: "user_id",
+  //     referencedColumnName: "id"
+  //   }
+  // })
+  // users: User[]
+
+  @OneToMany(() => UserTraining, userTraining => userTraining.training)
+  userTrainings: UserTraining[]
 }
